@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightFM extra resource post read</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --paper: #f6f8f2;
+  --paper-raised: #ffffff;
+  --ink: #172a20;
+  --ink-soft: #52604f;
+  --ink-faint: #7c8a76;
+  --pine: #1c6b45;
+  --pine-deep: #0d3c26;
+  --pine-bright: #2f8f5b;
+  --tomato: #b23a2e;
+  --tomato-deep: #7d2a22;
+  --sage-tint: #e7efe1;
+  --sage-tint-2: #dbe8d5;
+  --tomato-tint: #f4ded9;
+  --line: #d6ddcd;
+  --line-strong: #b9c4ac;
+  --shadow-soft: 0 1px 2px rgba(23,42,32,0.06);
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --measure: 680px;
+  --measure-wide: 1040px;
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  *, *::before, *::after{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+body{
+  margin:0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+img{ max-width:100%; display:block; }
+
+h1,h2,h3,h4{
+  font-family: var(--font-display);
+  color: var(--pine-deep);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 0.5em;
+}
+
+a{ color: var(--pine); text-underline-offset: 3px; }
+a:hover{ color: var(--tomato); }
+
+:focus-visible{
+  outline: 2.5px solid var(--tomato);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+p{ margin: 0 0 1.15em; }
+strong{ color: var(--ink); }
+
+code, .mono{ font-family: var(--font-mono); }
+
+/* ============================================================
+   LAYOUT PRIMITIVES
+   ============================================================ */
+.wrap{
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.wrap-wide{
+  max-width: var(--measure-wide);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+main{ position: relative; }
+
+.section{
+  padding: 76px 0 12px;
+  border-top: 1px solid var(--line);
+}
+.section:first-of-type{ border-top: none; }
+
+.section-head{
+  display:flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 34px;
+}
+.section-tag{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--paper);
+  background: var(--pine);
+  padding: 3px 9px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  flex: none;
+  transform: translateY(-2px);
+}
+.section-head h2{
+  font-size: clamp(1.55rem, 1.15rem + 1.6vw, 2.35rem);
+  margin: 0;
+}
+.section-kicker{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-faint);
+  margin: -18px 0 22px;
+}
+
+.lede{
+  font-size: 1.14em;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   HEADER / PROGRESS RAIL
+   ============================================================ */
+.top-bar{
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(246,248,242,0.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+.top-bar-inner{
+  max-width: var(--measure-wide);
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 52px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--pine-deep);
+  white-space: nowrap;
+}
+.brand-chip .dot{
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--tomato);
+  flex: none;
+}
+.progress-track{
+  flex: 1;
+  height: 3px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 340px;
+  display: none;
+}
+.progress-fill{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pine), var(--pine-bright));
+  transition: width 0.15s linear;
+}
+@media (min-width: 720px){
+  .progress-track{ display:block; }
+}
+
+.rail{
+  position: fixed;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  gap: 13px;
+}
+@media (min-width: 1180px){
+  .rail{ display:flex; }
+}
+.rail a{
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  display:block;
+  position: relative;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+.rail a.active{
+  background: var(--pine);
+  transform: scale(1.35);
+}
+.rail a:hover{ background: var(--tomato); }
+.rail a .rail-label{
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  background: var(--paper-raised);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+.rail a:hover .rail-label, .rail a.active .rail-label{ opacity: 1; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{
+  position: relative;
+  padding: 64px 0 60px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(28,107,69,0.10) 1px, transparent 1.6px) 0 0/16px 16px,
+    var(--paper);
+  overflow: hidden;
+  opacity: 0;
+  animation: heroIn 0.7s ease-out 0.05s forwards;
+}
+@keyframes heroIn{
+  from{ opacity: 0; transform: translateY(10px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.tag-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--pine-deep);
+  background: var(--paper-raised);
+  border: 1.5px dashed var(--pine);
+  padding: 6px 12px 6px 10px;
+  border-radius: 100px;
+  margin-bottom: 26px;
+}
+.tag-chip svg{ flex:none; }
+
+.hero h1{
+  font-size: clamp(2.3rem, 1.6rem + 3.2vw, 4.1rem);
+  letter-spacing: -0.01em;
+  max-width: 15ch;
+  margin-bottom: 14px;
+}
+.hero .subhead{
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.5rem);
+  color: var(--pine);
+  max-width: 32ch;
+  margin-bottom: 30px;
+}
+.hero-intro{
+  max-width: var(--measure);
+  font-size: 1.08em;
+  color: var(--ink-soft);
+}
+.hero-intro strong{ color: var(--pine-deep); }
+
+.receipt-quote{
+  position: relative;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  padding: 22px 26px 24px;
+  margin: 28px 0;
+  max-width: 560px;
+  clip-path: polygon(0% 3%, 2% 0%, 5% 3%, 8% 0%, 11% 3%, 14% 0%, 17% 3%, 20% 0%, 23% 3%, 26% 0%, 29% 3%, 32% 0%, 35% 3%, 38% 0%, 41% 3%, 44% 0%, 47% 3%, 50% 0%, 53% 3%, 56% 0%, 59% 3%, 62% 0%, 65% 3%, 68% 0%, 71% 3%, 74% 0%, 77% 3%, 80% 0%, 83% 3%, 86% 0%, 89% 3%, 92% 0%, 95% 3%, 98% 0%, 100% 3%, 100% 100%, 0% 100%);
+  box-shadow: var(--shadow-soft);
+}
+.receipt-quote p{
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  margin: 0;
+}
+.receipt-quote .who{
+  display:block;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.receipt-quote .who::before{ content: '— '; }
+
+.scroll-cue{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  margin-top: 36px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+.scroll-cue svg{ animation: bob 1.8s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(4px);} }
+
+/* ============================================================
+   PROSE + Q&A RHYTHM
+   ============================================================ */
+.prose{ max-width: var(--measure); }
+.prose h3{
+  font-size: 1.28rem;
+  margin-top: 1.6em;
+}
+.prose ul, .prose ol{ padding-left: 1.3em; margin: 0 0 1.15em; }
+.prose li{ margin-bottom: 0.4em; }
+.prose .analogy{
+  background: var(--sage-tint);
+  border-left: 3px solid var(--pine);
+  padding: 14px 18px;
+  border-radius: 0 6px 6px 0;
+  margin: 1.3em 0;
+  font-size: 0.98em;
+  color: var(--ink);
+}
+.prose .analogy strong.label{
+  display:block;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--pine);
+  margin-bottom: 6px;
+}
+
+.q-prompt{
+  display:flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 1.9em 0 0.7em;
+}
+.q-prompt .q-mark{
+  flex: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--pine-deep);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  display:flex; align-items:center; justify-content:center;
+  margin-top: 2px;
+}
+.q-prompt .q-text{
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.18em;
+  color: var(--pine-deep);
+  line-height: 1.4;
+}
+
+/* ============================================================
+   STAT CARDS
+   ============================================================ */
+.stat-row{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 14px;
+  margin: 1.6em 0;
+}
+.stat-card{
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--pine);
+  padding: 16px 16px 14px;
+  border-radius: 4px;
+}
+.stat-card .num{
+  font-family: var(--font-mono);
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--pine-deep);
+  display:block;
+  line-height: 1.1;
+}
+.stat-card .lbl{
+  font-size: 0.86em;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  display:block;
+}
+.stat-card.tomato{ border-left-color: var(--tomato); }
+.stat-card.tomato .num{ color: var(--tomato-deep); }
+
+/* ============================================================
+   CALLOUT / ASIDE (dashed ticket-style, collapsible)
+   ============================================================ */
+details.aside{
+  background: var(--paper-raised);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 1.6em 0;
+}
+details.aside summary{
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--pine);
+  font-weight: 500;
+  list-style: none;
+  display:flex; align-items:center; gap: 8px;
+}
+details.aside summary::-webkit-details-marker{ display:none; }
+details.aside summary::before{
+  content: '+';
+  display:inline-flex; align-items:center; justify-content:center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--pine);
+  font-size: 14px;
+  color: var(--pine);
+  transition: transform 0.2s;
+}
+details.aside[open] summary::before{ content: '–'; }
+details.aside .aside-body{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.96em;
+  color: var(--ink-soft);
+}
+details.aside .aside-body p:last-child{ margin-bottom: 0; }
+
+/* ============================================================
+   CARD GRIDS (applications, pros/cons, flavours, strategies)
+   ============================================================ */
+.card-grid{
+  display:grid;
+  gap: 14px;
+  margin: 1.6em 0;
+}
+.card-grid.cols-2{ grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+.card-grid.cols-3{ grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); }
+
+.info-card{
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px 19px;
+}
+.info-card h4{
+  font-size: 1.02rem;
+  margin-bottom: 6px;
+  color: var(--pine-deep);
+}
+.info-card p{ font-size: 0.94em; color: var(--ink-soft); margin-bottom: 0; }
+
+.pros-cons{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 1.6em 0;
+}
+@media (max-width: 560px){ .pros-cons{ grid-template-columns: 1fr; } }
+.pc-col{
+  border-radius: 6px;
+  padding: 17px 19px;
+  border: 1px solid var(--line);
+}
+.pc-col.pro{ background: var(--sage-tint); border-color: var(--sage-tint-2); }
+.pc-col.con{ background: var(--tomato-tint); border-color: #e8c3ba; }
+.pc-col h4{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  text-transform: none;
+  margin-bottom: 10px;
+  display:flex; align-items:center; gap:7px;
+}
+.pc-col.pro h4{ color: var(--pine-deep); }
+.pc-col.con h4{ color: var(--tomato-deep); }
+.pc-col ul{ margin:0; padding-left: 1.1em; }
+.pc-col li{ font-size: 0.93em; margin-bottom: 0.5em; color: var(--ink); }
+.pc-col li::marker{ font-size: 0.9em; }
+.pc-col.pro li::marker{ color: var(--pine); content: '✓  '; }
+.pc-col.con li::marker{ color: var(--tomato); content: '✗  '; }
+
+/* ============================================================
+   FLAVOUR / RECAP CARDS with numbers (legitimate sequence)
+   ============================================================ */
+.flavour-card{
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px 18px 16px;
+  position: relative;
+}
+.flavour-card .fnum{
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--pine);
+  border: 1px solid var(--pine);
+  border-radius: 100px;
+  padding: 2px 9px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.flavour-card h4{ font-size: 1.02rem; margin-bottom: 6px; }
+.flavour-card p{ font-size: 0.92em; color: var(--ink-soft); margin: 0; }
+
+/* ============================================================
+   FIGURES / DIAGRAMS
+   ============================================================ */
+.figure{
+  margin: 2em 0;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px 20px 18px;
+}
+.figure.breakout{ }
+.wrap-wide .figure{ padding: 26px 30px 22px; }
+.figure svg{ width: 100%; height: auto; display:block; }
+.figure figcaption{
+  font-size: 0.86em;
+  color: var(--ink-faint);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.figure figcaption strong{ color: var(--ink-soft); }
+
+/* ============================================================
+   PIPELINE / STEP TRACKER
+   ============================================================ */
+.pipeline{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 0;
+  counter-reset: step;
+}
+@media (max-width: 760px){ .pipeline{ grid-template-columns: 1fr; } }
+.pipeline .step{
+  position: relative;
+  padding: 0 18px 0 0;
+  border-right: 1px dashed var(--line-strong);
+}
+.pipeline .step:last-child{ border-right: none; padding-right: 0; }
+@media (max-width: 760px){
+  .pipeline .step{ border-right:none; border-bottom: 1px dashed var(--line-strong); padding: 0 0 18px; margin-bottom: 18px; }
+  .pipeline .step:last-child{ border-bottom: none; margin-bottom:0; padding-bottom:0; }
+}
+.pipeline .step .snum{
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--pine);
+  display:block;
+  margin-bottom: 8px;
+}
+.pipeline .step .sval{
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--pine-deep);
+  display:block;
+}
+.pipeline .step .slabel{
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  display:block;
+}
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+.quiz{
+  background: var(--paper-raised);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 8px;
+  padding: 22px 24px 24px;
+  margin: 2.2em 0;
+}
+.quiz .quiz-kicker{
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--tomato-deep);
+  margin-bottom: 8px;
+  display:flex; align-items:center; gap:7px;
+}
+.quiz .quiz-q{
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  color: var(--ink);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.quiz .quiz-q code{ background: var(--sage-tint); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+.quiz-opts{
+  display:flex;
+  flex-direction: column;
+  gap: 9px;
+  list-style: none;
+  margin:0; padding:0;
+}
+.quiz-opt{
+  display:block;
+  width:100%;
+  text-align:left;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  padding: 11px 14px;
+  font-family: var(--font-body);
+  font-size: 0.95em;
+  color: var(--ink);
+  cursor:pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.quiz-opt:hover{ border-color: var(--pine); }
+.quiz-opt.correct{
+  border-color: var(--pine);
+  background: var(--sage-tint);
+  color: var(--pine-deep);
+  font-weight: 600;
+}
+.quiz-opt.incorrect{
+  border-color: var(--tomato);
+  background: var(--tomato-tint);
+  color: var(--tomato-deep);
+}
+.quiz-opt[disabled]{ cursor: default; }
+.quiz-opt .mark{ font-family: var(--font-mono); margin-right:8px; font-size: 0.85em; }
+.quiz-explain{
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.93em;
+  color: var(--ink-soft);
+  display:none;
+}
+.quiz-explain.show{ display:block; }
+.quiz-explain strong{ color: var(--pine-deep); }
+
+/* ============================================================
+   PLAYGROUND (interactive sliders)
+   ============================================================ */
+.playground{
+  background: var(--pine-deep);
+  color: var(--paper);
+  border-radius: 12px;
+  padding: 30px 26px 32px;
+  margin: 2.4em 0;
+}
+.wrap-wide .playground{ padding: 36px 40px 38px; }
+.playground .pg-kicker{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--sage-tint);
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+.playground h3{
+  color: var(--paper);
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+.playground > p{
+  color: rgba(246,248,242,0.8);
+  font-size: 0.95em;
+  max-width: 62ch;
+  margin-bottom: 24px;
+}
+.pg-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+@media (max-width: 780px){ .pg-grid{ grid-template-columns: 1fr; } }
+.pg-controls{
+  display:flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.slider-row label{
+  display:flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: rgba(246,248,242,0.85);
+  margin-bottom: 7px;
+}
+.slider-row label .v{ color: #bfe6cf; font-weight: 600; }
+input[type=range]{
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(246,248,242,0.25);
+  outline-offset: 4px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 3px solid var(--pine-bright);
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 3px solid var(--pine-bright);
+  cursor: pointer;
+}
+.pg-output{
+  background: rgba(246,248,242,0.06);
+  border: 1px solid rgba(246,248,242,0.18);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+.metric-line{
+  display:flex;
+  justify-content: space-between;
+  align-items:baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(246,248,242,0.12);
+  font-size: 0.92em;
+}
+.metric-line:last-of-type{ border-bottom:none; }
+.metric-line .m-lbl{ color: rgba(246,248,242,0.75); }
+.metric-line .m-val{ font-family: var(--font-mono); font-weight:600; color: var(--paper); font-size: 1.02em; }
+.pg-verdict{
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 600;
+  text-align:center;
+}
+.pg-verdict.pos{ background: rgba(47,143,91,0.35); color: #d3f2df; }
+.pg-verdict.neu{ background: rgba(246,248,242,0.14); color: rgba(246,248,242,0.85); }
+.pg-verdict.neg{ background: rgba(178,58,46,0.35); color: #f6d9d3; }
+
+.twin-result{
+  background: rgba(246,248,242,0.06);
+  border: 1px solid rgba(246,248,242,0.18);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+.twin-result .twin-name{
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: #d3f2df;
+  margin-bottom: 4px;
+}
+.twin-result .twin-sim{
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgba(246,248,242,0.7);
+  margin-bottom: 14px;
+}
+.sim-bars{ display:flex; flex-direction:column; gap:8px; margin-bottom: 14px; }
+.sim-bar-row{ display:grid; grid-template-columns: 118px 1fr 44px; align-items:center; gap:8px; font-size: 11.5px; font-family: var(--font-mono); color: rgba(246,248,242,0.8); }
+.sim-bar-track{ height:6px; background: rgba(246,248,242,0.15); border-radius:3px; overflow:hidden; }
+.sim-bar-fill{ height:100%; background: linear-gradient(90deg, var(--pine-bright), #bfe6cf); border-radius:3px; }
+.twin-rec{
+  padding-top: 12px;
+  border-top: 1px solid rgba(246,248,242,0.15);
+  font-size: 0.95em;
+}
+.twin-rec .rec-item{ color: #ffe1b0; font-weight:600; font-family: var(--font-display); font-style: italic; font-size: 1.05em; }
+
+/* ============================================================
+   LIFT SCALE
+   ============================================================ */
+.lift-scale{ margin: 1.8em 0; }
+.lift-scale .track{
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--tomato) 0%, #e8c3ba 22%, var(--line-strong) 48%, var(--sage-tint-2) 72%, var(--pine) 100%);
+  position: relative;
+}
+.lift-scale .labels{
+  display:flex; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}
+.lift-scale .labels span:nth-child(2){ color: var(--ink-soft); }
+
+/* ============================================================
+   BREAKOUT WRAPPER for wide components inside prose flow
+   ============================================================ */
+.breakout-wrap{
+  max-width: var(--measure-wide);
+  margin: 2em auto;
+  padding: 0 24px;
+}
+
+/* ============================================================
+   COMPARE TOGGLE (item-item vs user-user, PCA vs SVD)
+   ============================================================ */
+.compare{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 1.8em 0;
+}
+@media (max-width: 620px){ .compare{ grid-template-columns: 1fr; } }
+.compare-col{
+  border-radius: 8px;
+  padding: 19px 20px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+}
+.compare-col .cc-label{
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--pine);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.compare-col h4{ font-size: 1.05rem; margin-bottom:8px; }
+.compare-col p{ font-size: 0.93em; color: var(--ink-soft); margin-bottom: 0; }
+
+/* ============================================================
+   WORKED EXAMPLE BAR CHART (bread & milk)
+   ============================================================ */
+.bar-chart{ display:flex; gap: 34px; align-items:flex-end; height: 150px; padding: 0 6px; margin-top: 34px;}
+.bar-chart .bar-col{ display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; height:100%; }
+.bar-chart .bar{ width: 56px; border-radius: 4px 4px 0 0; position:relative; }
+.bar-chart .bar .bval{ position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-family: var(--font-mono); font-size:12.5px; font-weight:600; white-space:nowrap; }
+.bar-chart .bar-lbl{ margin-top:10px; font-size:12.5px; color: var(--ink-soft); text-align:center; font-family: var(--font-mono); }
+
+/* ============================================================
+   RECAP GRID (wrap up)
+   ============================================================ */
+.recap-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.8em 0;
+}
+@media (max-width: 640px){ .recap-grid{ grid-template-columns: 1fr; } }
+.recap-item{
+  background: var(--paper-raised);
+  padding: 18px 20px;
+  display:flex;
+  gap: 14px;
+}
+.recap-item .rnum{
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--pine);
+  flex: none;
+  padding-top: 2px;
+}
+.recap-item p{ font-size: 0.92em; margin:0; color: var(--ink); }
+.recap-item strong{ color: var(--pine-deep); }
+
+/* ============================================================
+   MANAGER QUOTE (inline, smaller than hero receipt)
+   ============================================================ */
+.manager-quote{
+  border-left: 3px solid var(--tomato);
+  background: var(--tomato-tint);
+  padding: 14px 18px;
+  margin: 1.8em 0;
+  border-radius: 0 6px 6px 0;
+}
+.manager-quote p{
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05em;
+  color: var(--tomato-deep);
+  margin: 0;
+}
+.manager-quote .who{
+  display:block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+#site-footer{
+  background: var(--pine-deep);
+  color: rgba(246,248,242,0.82);
+  padding: 52px 0 34px;
+  margin-top: 60px;
+}
+#site-footer .wrap{ display:flex; flex-direction:column; gap: 18px; }
+#site-footer .foot-title{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--paper);
+  letter-spacing: 0.01em;
+}
+#site-footer p{ font-size: 0.88em; color: rgba(246,248,242,0.6); max-width: 60ch; margin:0; }
+#site-footer .foot-rule{ height:1px; background: rgba(246,248,242,0.15); border:none; margin: 4px 0; }
+#site-footer .back-top{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: #bfe6cf;
+  text-decoration: none;
+  display:inline-flex; align-items:center; gap:6px;
+  width: fit-content;
+}
+
+.formula{
+  font-family: var(--font-mono);
+  background: var(--sage-tint);
+  border: 1px solid var(--sage-tint-2);
+  border-radius: 6px;
+  padding: 14px 18px;
+  font-size: 1.02em;
+  color: var(--pine-deep);
+  margin: 1.3em 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.stat-card.big{
+  padding: 24px 26px 22px;
+  border-left-width: 4px;
+}
+.stat-card.big .num{ font-size: 2.6rem; }
+.stat-card.big .lbl{ font-size: 0.95em; margin-top: 8px; }
+
+.story-frame{
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 28px 28px 26px;
+  margin: 1.8em 0;
+  box-shadow: var(--shadow-soft);
+}
+.story-frame p:last-child{ margin-bottom: 0; }
+
+@media (max-width: 480px){
+  body{ font-size: 16px; }
+  .section{ padding: 54px 0 8px; }
+}
+
+/* ============================================================
+   TABLE TOGGLE (interactions vs weights)
+   ============================================================ */
+.table-toggle{
+  display:inline-flex;
+  gap: 4px;
+  background: var(--sage-tint);
+  border: 1px solid var(--sage-tint-2);
+  border-radius: 100px;
+  padding: 4px;
+  margin-bottom: 18px;
+}
+.toggle-btn{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 7px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.toggle-btn.active{
+  background: var(--pine);
+  color: var(--paper);
+  font-weight: 600;
+}
+.toggle-btn:hover:not(.active){ color: var(--pine-deep); }
+
+.data-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+.data-table th{
+  text-align: center;
+  padding: 9px 10px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  border-bottom: 2px solid var(--pine);
+}
+.data-table th:first-child{ text-align:left; color: var(--pine-deep); }
+.data-table td{
+  text-align: center;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+.data-table td:first-child{ text-align:left; font-weight: 600; color: var(--pine-deep); }
+.data-table td.hl{
+  background: var(--sage-tint);
+  color: var(--pine-deep);
+  font-weight: 700;
+  border-radius: 4px;
+}
+.table-note{
+  font-size: 0.86em;
+  color: var(--ink-faint);
+  margin-top: 12px;
+}
+
+/* ============================================================
+   CODE FIGURE (reference code, not executable)
+   ============================================================ */
+.code-figure{
+  background: var(--pine-deep);
+  border-radius: 10px;
+  padding: 4px 0 0;
+  margin: 2em 0;
+  overflow: hidden;
+}
+.code-figure .code-label{
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: rgba(246,248,242,0.6);
+  padding: 12px 22px 0;
+}
+.code-figure pre{
+  margin: 0;
+  padding: 14px 22px 20px;
+  overflow-x: auto;
+}
+.code-figure code{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: #d3f2df;
+  white-space: pre;
+}
+.code-figure .cmt{ color: rgba(211,242,223,0.5); }
+.code-figure .kw{ color: #ffc9a8; }
+.code-figure .str{ color: #bfe6cf; }
+.code-figure-note{
+  font-family: var(--font-body);
+  font-size: 0.86em;
+  color: var(--ink-faint);
+  margin-top: 12px;
+}
+
+/* ============================================================
+   RANK EXPLORER (trust-weight playground)
+   ============================================================ */
+.rank-list{ display:flex; flex-direction:column; gap: 10px; }
+.rank-row{
+  display:grid;
+  grid-template-columns: 30px 1fr auto;
+  align-items:center;
+  gap: 14px;
+  background: rgba(246,248,242,0.06);
+  border: 1px solid rgba(246,248,242,0.16);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.rank-row.is-top{ background: rgba(47,143,91,0.28); border-color: rgba(191,230,207,0.4); }
+.rank-badge{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--paper);
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(246,248,242,0.14);
+  display:flex; align-items:center; justify-content:center;
+  flex: none;
+}
+.rank-row.is-top .rank-badge{ background: var(--pine-bright); }
+.rank-main{ min-width: 0; }
+.rank-name{ font-family: var(--font-display); font-style: italic; font-size: 1.05rem; color: var(--paper); }
+.rank-meta{ font-family: var(--font-mono); font-size: 11px; color: rgba(246,248,242,0.6); margin-top: 2px; }
+.rank-bar-track{ height: 5px; background: rgba(246,248,242,0.15); border-radius: 3px; margin-top: 7px; overflow:hidden; }
+.rank-bar-fill{ height:100%; background: linear-gradient(90deg, var(--pine-bright), #bfe6cf); border-radius:3px; transition: width 0.25s ease; }
+.rank-score{ font-family: var(--font-mono); font-size: 1rem; font-weight:700; color: #d3f2df; text-align:right; }
+.rank-trust-labels{ display:flex; justify-content:space-between; font-family: var(--font-mono); font-size: 11.5px; color: rgba(246,248,242,0.7); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <span class="brand-chip"><span class="dot"></span>DailyMart Files · Extra Resource — Hybrid Recommenders</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<nav class="rail" id="rail" aria-label="Section navigation">
+  <a href="#sec-hybrid" data-label="01 Two Ways"><span class="rail-label">01 Two Ways to Hybridize</span></a>
+  <a href="#sec-lightfm" data-label="02 LightFM"><span class="rail-label">02 Strategy 1 — LightFM</span></a>
+  <a href="#sec-rankcombo" data-label="03 Rank Combination"><span class="rail-label">03 Strategy 2 — Rank Combination</span></a>
+  <a href="#sec-loss" data-label="04 Loss Functions"><span class="rail-label">04 Teaching It to Rank</span></a>
+  <a href="#sec-wrap" data-label="05 Wrap-Up"><span class="rail-label">05 Wrap-Up</span></a>
+</nav>
+
+<main id="top">
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag-chip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Extra resource · Post-read
+    </span>
+    <h1>One Model, Two Languages</h1>
+    <p class="subhead">A short continuation of Nisha's story — hybrid recommenders</p>
+    <div class="hero-intro">
+      <p>This picks up right where the matrix factorization session left off. <strong>Nisha's demo goes down well</strong> — her manager finally sees personalized recommendations working at scale. But a week later, a new wrinkle shows up.</p>
+      <div class="receipt-quote">
+        <p>"Our catalog team just handed us a spreadsheet of product attributes — category, brand, price band. And marketing still swears by the 'liked items' lists we built earlier with content-based filtering. Can our one recommender use all of this — the behaviour data and the attribute data — together? Or do we really need to run two separate systems side by side forever?"</p>
+        <span class="who">DailyMart, a week later</span>
+      </div>
+      <p>Turns out, there isn't one single answer — there are two broad ways data scientists build hybrid recommenders, and most production systems you use every day (Spotify, YouTube, Amazon) lean on some version of each.</p>
+    </div>
+    <span class="scroll-cue">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      See the two approaches
+    </span>
+  </div>
+</header>
+
+<section class="section" id="sec-hybrid">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-tag">01</span>
+      <h2>Two Ways to Build a Hybrid</h2>
+    </div>
+    <div class="prose">
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        Imagine DailyMart is hiring, and wants one final decision that weighs both a candidate's résumé (attributes — like content-based filtering) and how they performed in a trial task (behaviour — like collaborative filtering). There are two honest ways to arrive at that one decision.
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="cc-label">one interviewer who sees everything</div>
+        <h4>LightFM</h4>
+        <p>A single evaluator reads the résumé <em>and</em> watches the trial task, forming one blended judgement. One model, fed both the interaction history and the descriptive features, learning a single combined judgement per user-item pair.</p>
+      </div>
+      <div class="compare-col">
+        <div class="cc-label">two interviewers, then compare notes</div>
+        <h4>Rank-combination hybrid</h4>
+        <p>A résumé-screener and a trial-task-observer each independently produce their own shortlist, and HR merges the two afterwards. Train content-based and collaborative filtering separately, then merge their outputs.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Nisha decides to explore both, since her manager will want to understand the trade-offs before picking one.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-lightfm">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-tag">02</span>
+      <h2>Strategy 1 — LightFM</h2>
+    </div>
+    <p class="section-kicker">One model, two kinds of signal</p>
+    <div class="prose">
+      <p>LightFM is a popular library built exactly for the "one interviewer who sees everything" idea. Under the hood, it's still learning the same kind of compact "flavour profile" vectors from the matrix factorization story from before — except now those profiles can be <em>nudged</em> by known attributes (a user's city, an item's category) as well as by raw behaviour.</p>
+      <p>To train it, Nisha needs to hand over at least one, and optionally a second, kind of information.</p>
+
+      <h3>Ingredient 1 — the interactions</h3>
+      <p>At a minimum, LightFM needs to know <strong>who engaged with what</strong> — a simple yes/no signal, exactly like the user-item matrix <code>A</code> from before, filled in with a 1 wherever an interaction happened (a click, a purchase, a watch) and left blank everywhere else.</p>
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        Think of this as a basic attendance register — it tells you who showed up, but nothing about how enthusiastically they took part.
+      </div>
+
+      <h3>Ingredient 2 (optional) — the weights</h3>
+      <p>Here's where it gets interesting: LightFM lets Nisha <em>optionally</em> attach a second matrix, the same shape as the interactions, called <strong>sample weights</strong>, that tells the model <em>how strong</em> each interaction was — units bought, a 1–5 star rating, minutes watched, or how recently it happened.</p>
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        This upgrades the attendance register into a participation score — not just "Rohan showed up," but "Rohan showed up three separate times and stocked up each time," versus "Simran dropped by once for a single item." Same register, very different signal underneath.
+      </div>
+      <p>A tiny, made-up DailyMart purchase log makes the difference concrete:</p>
+    </div>
+  </div>
+
+  <div class="breakout-wrap">
+    <div class="figure breakout">
+      <div class="table-toggle" role="tablist" aria-label="Table view">
+        <button class="toggle-btn active" id="btnInteractions" role="tab" aria-selected="true">Interactions only</button>
+        <button class="toggle-btn" id="btnWeights" role="tab" aria-selected="false">With weights</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="signalTable" aria-live="polite"></table>
+      </div>
+      <p class="table-note" id="signalCaption">Every cell is 0 or 1 — did this user ever interact with this item? Rohan's two Instant Noodles purchases and Simran's single Protein Bar purchase both just read as a flat "1."</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="prose">
+      <div class="q-prompt"><span class="q-mark">Q</span><span class="q-text">So what actually changes if Nisha trains LightFM using only the plain interactions, with no weights supplied?</span></div>
+      <p>By default, every recorded interaction is treated as equally meaningful — a single impulse click looks identical to a loyal customer who buys the same item every week. The model still learns perfectly valid patterns about <em>who tends to like what</em>, since that's all the "attendance register" ever told it. What it <strong>can't</strong> do is tell a strong preference apart from a weak one, because that distinction was simply never in the data it was handed.</p>
+      <p>If Nisha's business question is purely "will this user engage with this item at all?", plain interactions are enough. If it's "which of these two items would they prefer more?", she needs to hand over the weights too — otherwise the model has no way of knowing that one signal mattered more than another.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-rankcombo">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-tag">03</span>
+      <h2>Strategy 2 — Rank Combination</h2>
+    </div>
+    <p class="section-kicker">Keep the models separate, merge the results</p>
+    <div class="prose">
+      <p>Not every team wants, or has time, to retrain one combined model every time a new feature shows up. Often it's simpler to keep the content-based and collaborative-filtering recommenders Nisha already built as two independent systems, each producing its own ranked shortlist for a user, and combine the <em>outputs</em> afterwards — the "two interviewers comparing notes" approach.</p>
+
+      <div class="q-prompt"><span class="q-mark">Q</span><span class="q-text">If both lists already disagree on the order, how do we arrive at one final list?</span></div>
+      <h3>Weighted rank combination</h3>
+      <p>The usual trick: assign each engine a <strong>trust weight</strong> — how much Nisha believes in that engine's judgement for this use case — turn each item's position in each list into a comparable score, and blend them.</p>
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        Picture a dance competition with a technical judge and an audience-vote judge. The organizers don't just crown whoever tops a <em>single</em> judge's sheet — they combine both scores, usually with a pre-agreed weighting (say, 60% technical, 40% audience), and whoever has the best <em>combined</em> standing wins overall. Crucially: a #1 ranking from just one judge is not an automatic win. It depends on how much weight that judge's opinion carries, and how the other contenders fared with both judges.
+      </div>
+    </div>
+  </div>
+
+  <div class="breakout-wrap">
+    <div class="playground">
+      <div class="pg-kicker">Interactive playground</div>
+      <h3>Trust-weight explorer</h3>
+      <p>Four items, ranked independently by content-based (CB) and collaborative-filtering (CF) engines. Drag the slider to change how much trust the combined score gives each engine, and watch the final order shift live. Lower combined score wins.</p>
+      <div class="pg-grid">
+        <div class="pg-controls">
+          <div class="slider-row">
+            <label for="trustSlider">Trust in Content-Based <span class="v" id="trustVal">50%</span></label>
+            <input type="range" id="trustSlider" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="rank-trust-labels">
+            <span>100% Collaborative Filtering</span>
+            <span>100% Content-Based</span>
+          </div>
+        </div>
+        <div class="rank-list" id="rankList" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="prose">
+      <p><strong>Try this:</strong> at equal trust (50/50), <strong>Saucer</strong> — a solid #2 in CB and #1 in CF — edges out <strong>Teacup</strong>'s extreme #1-in-CB-only ranking. A consistently good performer beats a lopsided #1. Keep dragging toward content-based trust, and watch for the tipping point — somewhere past 75% CB trust — where Teacup's strong CB rank finally takes back the lead. In other words: it depends entirely on the weight assigned to each engine, and how the other contenders performed across <em>both</em> lists — never on one engine's rank in isolation.</p>
+    </div>
+
+    <div class="quiz" data-quiz>
+      <div class="quiz-kicker">Quick check — trusting the judges</div>
+      <p class="quiz-q">DailyMart combines its CB and CF ranked lists with equal trust weights (0.5 each). Item <code>Kettle</code> is ranked #2 by CB and #2 by CF. Item <code>Tray</code> is ranked #1 by CB and #6 by CF. Which one tops the combined hybrid list, and why?</p>
+      <ul class="quiz-opts">
+        <li><button class="quiz-opt" data-correct="false">Tray, because a #1 rank from either engine should always dominate the merged list.</button></li>
+        <li><button class="quiz-opt" data-correct="true">Kettle, because a consistent, solid rank across both engines can out-score an extreme #1 paired with a poor rank, once the ranks are actually combined.</button></li>
+        <li><button class="quiz-opt" data-correct="false">They tie, since both items appear in the top handful of at least one engine.</button></li>
+        <li><button class="quiz-opt" data-correct="false">Tray, because content-based rankings are inherently trusted more than collaborative ones.</button></li>
+      </ul>
+      <div class="quiz-explain"><strong>Why:</strong> Combined score (equal weights, lower is better) = 0.5 × CB_rank + 0.5 × CF_rank. Tray scores 0.5(1) + 0.5(6) = 3.5, while Kettle scores 0.5(2) + 0.5(2) = 2.0. Kettle wins — exactly the "Saucer beats Teacup" pattern from the playground above. There's nothing special about content-based rankings being trusted more by default — that only happens if the weights are explicitly set that way.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-loss">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-tag">04</span>
+      <h2>Teaching It How to Rank</h2>
+    </div>
+    <p class="section-kicker">LightFM's loss functions</p>
+    <div class="prose">
+      <p>Strategy 1 and Strategy 2 both answer "whose opinion counts." But there's a second, separate decision Nisha has to make when training LightFM itself: <strong>what exactly should the model try to get right while it learns?</strong> This is controlled by its <strong>loss function</strong>.</p>
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        Imagine grading an essay competition two different ways. <strong>Option A — score each essay in isolation:</strong> give every essay an absolute mark out of 10, trying to get each number as accurate as possible. <strong>Option B — just get the final order right:</strong> forget precise marks; all that matters is that the best essay ends up ranked above the second-best, which ends up above the third, and so on — because, in the end, only the shortlist at the top will ever be shown to anyone. LightFM's options built for implicit, "did-they-engage-or-not" data — <code>'bpr'</code> and <code>'warp'</code> — both follow the Option B philosophy: they only care about relative order, not exact scores.
+      </div>
+
+      <h3>WARP — fixing the worst mistakes first</h3>
+      <p><code>'warp'</code> (Weighted Approximate-Rank Pairwise) is the more aggressive of the two ranking losses. While training, for every item a user is known to like, it keeps sampling <em>other</em> items the user hasn't interacted with, checking: did the model accidentally rank one of these random, unproven items <em>above</em> an item we know the user actually liked?</p>
+      <div class="analogy">
+        <strong class="label">Analogy</strong>
+        It's like a strict editor skimming Nisha's draft "recommended for you" list, who stops the moment she spots a liked item buried too far down, beneath things the user has shown no interest in — and then forces that mistake to be corrected hard, roughly in proportion to how far down the liked item had sunk. A liked item buried at position 50 gets a much bigger correction than one that only slipped to position 3.
+      </div>
+
+      <div class="q-prompt"><span class="q-mark">Q</span><span class="q-text">So when Nisha sets loss='warp', what is the model actually optimizing for?</span></div>
+      <p>Not an exact predicted rating, and not merely "is this pair a 1 or a 0." It's optimizing the <strong>ranking order of items for each user</strong> — specifically, pushing items a user is known to like as close to the <em>top</em> of their personal list as possible, and correcting the most glaring ranking mistakes the hardest. That makes it especially well-suited to the real goal of most recommender products: getting a handful of genuinely good items into the Top-10 a user actually sees, rather than getting every score in the matrix numerically precise.</p>
+      <p>Here's the shape of the real call, with the pieces from above plugged in:</p>
+    </div>
+  </div>
+
+  <div class="breakout-wrap">
+    <div class="code-figure">
+      <div class="code-label">Python — mirrors the real LightFM API</div>
+      <pre><code><span class="cmt"># needs the `lightfm` package installed, which can be fiddly on some</span>
+<span class="cmt"># environments — this is reference code showing how the pieces fit together</span>
+
+<span class="kw">from</span> lightfm <span class="kw">import</span> LightFM
+<span class="kw">from</span> lightfm.data <span class="kw">import</span> Dataset
+
+dataset = Dataset()
+dataset.fit(users=log[<span class="str">'user'</span>].unique(), items=log[<span class="str">'item'</span>].unique())
+
+<span class="cmt"># Strategy 1 in code: interactions AND (optionally) weights, into ONE model</span>
+(interactions_matrix, weights_matrix) = dataset.build_interactions(
+    [(row.user, row.item, row.units) <span class="kw">for</span> row <span class="kw">in</span> log.itertuples()]
+)
+
+model = LightFM(loss=<span class="str">'warp'</span>)          <span class="cmt"># the ranking philosophy from above</span>
+model.fit(interactions_matrix,
+          sample_weight=weights_matrix,  <span class="cmt"># drop this to fall back to interactions-only</span>
+          epochs=10)</code></pre>
+    </div>
+    <p class="code-figure-note">If <code>lightfm</code> isn't installed, this still shows the shape of a real call: <code>Dataset</code> → <code>build_interactions</code> (plus optional weights) → <code>LightFM(loss='warp')</code> → <code>fit()</code>. Everything it draws on, Nisha has already built by hand above.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-wrap">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-tag">05</span>
+      <h2>Wrap-Up</h2>
+    </div>
+    <div class="recap-grid">
+      <div class="recap-item"><span class="rnum">01</span><p><strong>LightFM</strong> builds a single blended model that learns from interactions alone, or interactions <em>plus</em> feature/weight signals — it doesn't force two separate pipelines.</p></div>
+      <div class="recap-item"><span class="rnum">02</span><p><strong>Interactions-only training</strong> treats every recorded engagement as equally strong — fine for "will they engage at all," but blind to <em>degree</em> of preference unless sample weights are also supplied.</p></div>
+      <div class="recap-item"><span class="rnum">03</span><p><strong>Rank-combination hybrids</strong> merge two independently-trained CB/CF shortlists using trust weights — a top rank in one engine is never a guaranteed overall win.</p></div>
+      <div class="recap-item"><span class="rnum">04</span><p><strong>Loss functions</strong> like <code>'bpr'</code> and <code>'warp'</code> optimize relative order, not exact scores — <code>'warp'</code> prioritizes fixing the worst-ranked "liked" items first, which is why it tends to perform well for Top-N recommendation quality.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer id="site-footer">
+  <div class="wrap">
+    <span class="foot-title">LightFM extra resource post read</span>
+    <p>A continuation of Nisha's story: blending content-based and collaborative signals into one LightFM model, or merging two independently-trained engines with trust-weighted rank combination.</p>
+    <hr class="foot-rule">
+    <a class="back-top" href="#top">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      Back to top
+    </a>
+  </div>
+</footer>
+
+<script>
+(function(){
+
+  /* ---------- progress bar + rail highlighting ---------- */
+  var progressFill = document.getElementById('progressFill');
+  function onScroll(){
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    if(progressFill) progressFill.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var railLinks = document.querySelectorAll('.rail a');
+  var sections = document.querySelectorAll('main > section[id]');
+  if('IntersectionObserver' in window && sections.length){
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        var link = document.querySelector('.rail a[href="#' + entry.target.id + '"]');
+        if(!link) return;
+        if(entry.isIntersecting){
+          railLinks.forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+        }
+      });
+    }, {rootMargin: '-40% 0px -50% 0px', threshold: 0});
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+
+  /* ---------- quiz handler ---------- */
+  function markOption(opt, symbol){
+    var m = document.createElement('span');
+    m.className = 'mark';
+    m.textContent = symbol;
+    opt.prepend(m);
+  }
+  document.querySelectorAll('.quiz[data-quiz]').forEach(function(quiz){
+    var opts = quiz.querySelectorAll('.quiz-opt');
+    var explain = quiz.querySelector('.quiz-explain');
+    var answered = false;
+    opts.forEach(function(opt){
+      opt.addEventListener('click', function(){
+        if(answered) return;
+        answered = true;
+        var isCorrect = opt.getAttribute('data-correct') === 'true';
+        opts.forEach(function(o){
+          o.disabled = true;
+          if(o.getAttribute('data-correct') === 'true'){
+            o.classList.add('correct');
+            markOption(o, '✓');
+          } else if(o === opt && !isCorrect){
+            o.classList.add('incorrect');
+            markOption(o, '✗');
+          }
+        });
+        if(explain) explain.classList.add('show');
+      });
+    });
+  });
+
+  /* ---------- interactions vs weights table toggle ---------- */
+  var rows = ['Farah', 'Hema', 'Rohan', 'Simran'];
+  var cols = ['Diapers', 'Green Tea', 'Instant Noodles', 'Oats', 'Protein Bar'];
+  var interactions = {
+    'Farah':  [0,0,0,1,0],
+    'Hema':   [0,1,0,1,0],
+    'Rohan':  [1,0,1,0,0],
+    'Simran': [0,0,0,0,1]
+  };
+  var weights = {
+    'Farah':  [0,0,0,2,0],
+    'Hema':   [0,1,0,1,0],
+    'Rohan':  [1,0,6,0,0],
+    'Simran': [0,0,0,0,1]
+  };
+  var highlight = { 'Rohan': 2, 'Simran': 4 }; // row name -> column index to highlight
+
+  var signalTable = document.getElementById('signalTable');
+  var signalCaption = document.getElementById('signalCaption');
+  var btnInteractions = document.getElementById('btnInteractions');
+  var btnWeights = document.getElementById('btnWeights');
+
+  function renderSignalTable(view){
+    if(!signalTable) return;
+    var data = view === 'weights' ? weights : interactions;
+    var html = '<thead><tr><th>Customer</th>';
+    cols.forEach(function(c){ html += '<th>' + c + '</th>'; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(r){
+      html += '<tr><td>' + r + '</td>';
+      cols.forEach(function(c, i){
+        var val = data[r][i];
+        var hl = (highlight[r] === i) ? ' class="hl"' : '';
+        html += '<td' + hl + '>' + val + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    signalTable.innerHTML = html;
+
+    if(signalCaption){
+      signalCaption.textContent = view === 'weights'
+        ? 'With weights, Rohan\'s restocked Instant Noodles habit shows up as a 6, clearly ahead of Simran\'s one-off Protein Bar purchase at 1 — the distinction the plain interactions view couldn\'t make.'
+        : 'Every cell is 0 or 1 — did this user ever interact with this item? Rohan\'s two Instant Noodles purchases and Simran\'s single Protein Bar purchase both just read as a flat "1."';
+    }
+    if(btnInteractions && btnWeights){
+      btnInteractions.classList.toggle('active', view !== 'weights');
+      btnInteractions.setAttribute('aria-selected', view !== 'weights');
+      btnWeights.classList.toggle('active', view === 'weights');
+      btnWeights.setAttribute('aria-selected', view === 'weights');
+    }
+  }
+  if(btnInteractions) btnInteractions.addEventListener('click', function(){ renderSignalTable('interactions'); });
+  if(btnWeights) btnWeights.addEventListener('click', function(){ renderSignalTable('weights'); });
+  renderSignalTable('interactions');
+
+  /* ---------- rank-combination trust-weight explorer ---------- */
+  var rankItems = [
+    { name: 'Teacup', cb: 1, cf: 4 },
+    { name: 'Saucer', cb: 2, cf: 1 },
+    { name: 'Mug',    cb: 4, cf: 2 },
+    { name: 'Tray',   cb: 3, cf: 3 }
+  ];
+  var trustSlider = document.getElementById('trustSlider');
+  var trustVal = document.getElementById('trustVal');
+  var rankList = document.getElementById('rankList');
+
+  function updateRankExplorer(){
+    if(!trustSlider || !rankList) return;
+    var wCB = parseInt(trustSlider.value, 10) / 100;
+    var wCF = 1 - wCB;
+    trustVal.textContent = Math.round(wCB * 100) + '%';
+
+    var scored = rankItems.map(function(it){
+      return { name: it.name, cb: it.cb, cf: it.cf, score: (wCB * it.cb) + (wCF * it.cf) };
+    });
+    scored.sort(function(a,b){ return a.score - b.score; });
+
+    rankList.innerHTML = '';
+    scored.forEach(function(it, idx){
+      var row = document.createElement('div');
+      row.className = 'rank-row' + (idx === 0 ? ' is-top' : '');
+      var barWidth = Math.max(4, Math.min(100, (it.score / 4) * 100));
+      row.innerHTML =
+        '<span class="rank-badge">' + (idx + 1) + '</span>' +
+        '<div class="rank-main">' +
+          '<div class="rank-name">' + it.name + '</div>' +
+          '<div class="rank-meta">CB rank ' + it.cb + ' · CF rank ' + it.cf + '</div>' +
+          '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + barWidth + '%"></div></div>' +
+        '</div>' +
+        '<div class="rank-score">' + it.score.toFixed(2) + '</div>';
+      rankList.appendChild(row);
+    });
+  }
+  if(trustSlider) trustSlider.addEventListener('input', updateRankExplorer);
+  updateRankExplorer();
+
+})();
+</script>
+</body>
+</html>
